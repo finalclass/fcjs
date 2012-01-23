@@ -1,0 +1,28 @@
+Inversion of Control JavaScript framework
+It's developed under the MIT License
+
+Please check out the example (example.html)
+
+The example is written using jquery but fc library does not depends on it.
+it's written in pure JavaScript.
+
+usage:
+fc(object, propertyName).metaDataTag()
+
+where mataDataTag can be one of supported tags:
+**postConstruct()**
+Called after every dependency is injected.
+
+**inject(beanName)**
+injects one of the beans.
+Beans can be provided by calling fc.beans(beansList) - where beansList is a key value object of beans
+
+**eventHandler({event: 'EventName', properties: ['property1, 'property2'])**
+Set's the event handler and populates invocation with properties from the event
+
+
+@TODO
+Write documentation
+manual addition of the beans
+manual removal of the beans
+Tests
