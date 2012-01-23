@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>fcjs Example</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" ></script>
+    <script type="text/javascript" src="fc.js"></script>
+
+    <script>
+
+        /**
+         * @constructor
+         * @param {String} type
+         * @param {String} taskName
+         */
+        var TaskEvent = function(type, taskName) {
+            this.type = type;
+            this.taskName = taskName;
+        };
+        TaskEvent.ADDED = 'task:added';
+        TaskEvent.ADD = 'task:add';
+        TaskEvent.REMOVE = 'task:remove';
+        TaskEvent.REMOVED = 'task:removed';
+
+        /**
+         * @constructor
+         */
+        var TaskModel = function() {
+            var data = ['Write better documentation', 'Write tests'];
+
+            fc(this, 'add').eventHandler({event: TaskEvent.ADD, properties: ['taskName']});
+            this.add = function(name) {
+                data.push(name);
+                fc.dispatchEvent(new TaskEvent(TaskEvent.ADDED, name));
+            };
+
+            fc(this, 'remove').eventHandler({event: TaskEvent.REMOVE, properties: ['taskName']});
+            this.remove = function(name) {
+                if(data.indexOf(name) > -1) {
+                    data.splice(data.indexOf(name), 1);
+                    fc.dispatchEvent(new TaskEvent(TaskEvent.REMOVED, name));
+                }
+            };
+
+            this.getData = function() {
+                return data;
+            }
+
+        };
+
+        /**
+         * @constructor
+         * @param {jQuery} view
+         */
+        var TaskListMediator = function(view) {
+            this.view = view;
+            fc(this, 'taskModel').inject('TaskModel');
+            this.taskModel = null;
+
+            fc(this, 'redraw')
+                .postConstruct()
+                .eventHandler({event:TaskEvent.REMOVED});
+            this.redraw = function() {
+                view.empty();
+                var data = this.taskModel.getData();
+                for(var i in data) {
+                    this.addElement(data[i]);
+                }
+            };
+
+            fc(this, 'addElement').eventHandler({event: TaskEvent.ADDED, properties: ['taskName']});
+            this.addElement = function(taskName) {
+                var removeButton = $('<button>x</button>').click(function() {
+                    fc.dispatchEvent(new TaskEvent(TaskEvent.REMOVE, taskName));
+                });
+                var item = $('<li></li>')
+                        .text(taskName)
+                        .data('name', taskName)
+                        .append(removeButton);
+                view.append(item);
+            };
+            fc.dispatchEvent({type:'addedToStage', target: this});
+        };
+
+        /**
+         * @constructor
+         * @param {jQuery} view
+         */
+        var TaskAddFormMediator = function(view) {
+            var textInput = view.find('input[type="text"]');
+            view.submit(function(event) {
+                event.preventDefault();
+                fc.dispatchEvent(new TaskEvent(TaskEvent.ADD, textInput.val()));
+            });
+            fc.dispatchEvent({type:'addedToStage', target: this});
+        };
+
+        /**
+         * @constructor
+         */
+        var Controller = function() {
+            fc.beans({
+                'TaskModel': new TaskModel()
+            });
+            var list = new TaskListMediator($('#task_list'));
+            var secondList = new TaskListMediator($('#second_list'));
+            var form = new TaskAddFormMediator($('#task_add_form'));
+        };
+
+        $(function(){
+            var controller = new Controller();
+        });
+
+
+    </script>
+
+    <style type="text/css">
+
+    </style>
+</head>
+<body>
+
+<ul id="task_list"></ul>
+<form action="#" id="task_add_form">
+    <input id="task_name_input" type="text" placeholder="Task name..."/>
+    <input id="task_add_button" type="submit" value="Add"/>
+</form>
+
+<h3>Second list, just for presentation</h3>
+<ul id="second_list"></ul>
+
+</body>
+</html>
