@@ -49,17 +49,19 @@
         ];
 
         fc(this, 'init').postConstruct();
-        this.init = function() {
+        this.init = function () {
 
         };
 
         fc(this, 'addTask').eventHandler({event:TaskEvent.ADD, properties:['taskName']});
         this.addTask = function (name) {
-            this.data().push(new Task({name:name}));
+            this.data.push(new Task({name:name}));
+            fc.dispatchEvent(new TaskEvent(TaskEvent.ADDED, name));
         };
     };
 
     var TasksViewModel = function () {
+        var that = this;
 
         fc(this, 'tasks').inject('TasksModel');
         this.tasks = null;

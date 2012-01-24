@@ -118,7 +118,7 @@ var fc = (function () {
       }
       var definition = bean.__meta.bindables[i];
 
-      if(typeof bean[i.propertyName] == 'array') {
+      if(Object.prototype.toString.call( bean[definition.propertyName] ) === '[object Array]') {
         bean[definition.propertyName] = ko.observableArray(bean[definition.propertyName]);
       } else {
         bean[definition.propertyName] = ko.observable(bean[definition.propertyName]);
