@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FCJS - Bindable</title>
+    <script type="text/javascript" src="/libs/jquery.js"></script>
+    <script type="text/javascript" src="../ko.js"></script>
+    <script type="text/javascript" src="../fc.js"></script>
+    <script type="text/javascript" src="../jquery-model.js"></script>
+</head>
+<body>
+
+<div data-model="TasksViewModel">
+    <ul data-bind="foreach: tasks.data">
+        <li data-bind="text: name "></li>
+    </ul>
+    <input type="text" data-bind="value: newTaskName" placeholder="Task name"/>
+    <button data-bind="click: addTask">Add task</button>
+</div>
+
+<script type="text/javascript">
+
+    /**
+     * @constructor
+     * @param {String} type
+     * @param {String} taskName
+     */
+    var TaskEvent = function (type, taskName) {
+        this.type = type;
+        this.taskName = taskName;
+    };
+    TaskEvent.ADDED = 'task:added';
+    TaskEvent.ADD = 'task:add';
+    TaskEvent.REMOVE = 'task:remove';
+    TaskEvent.REMOVED = 'task:removed';
+
+    var Task = function (data) {
+        fc(this, 'name').bindable();
+        this.name = data.name;
+
+        fc.initBean(this);
+        return this;
+    };
+
+    var TasksModel = function () {
+        fc(this, 'data').bindable();
+        this.data = [
+            new Task({name:"Create the faq"}),
+            new Task({name:"finish fcjs"})
+        ];
+
+        fc(this, 'init').postConstruct();
+        this.init = function() {
+
+        };
+
+        fc(this, 'addTask').eventHandler({event:TaskEvent.ADD, properties:['taskName']});
+        this.addTask = function (name) {
+            this.data().push(new Task({name:name}));
+        };
+    };
+
+    var TasksViewModel = function () {
+
+        fc(this, 'tasks').inject('TasksModel');
+        this.tasks = null;
+
+        fc(this, 'newTaskName').bindable();
+        this.newTaskName = '';
+
+        this.addTask = function () {
+            fc.dispatchEvent(new TaskEvent(TaskEvent.ADD, this.newTaskName()));
+        };
+
+        return this;
+    };
+
+    $(function () {
+        fc.beans({
+            'TasksModel':new TasksModel()
+        });
+        $('[data-model]').model();
+    });
+
+</script>
+</body>
+</html>

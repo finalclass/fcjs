@@ -29,7 +29,8 @@ var fc = (function () {
       context.__meta = {
         postConstructListeners:new Array(),
         dependencies:new Array(),
-        eventHandlers:new Object()
+        eventHandlers:new Object(),
+        bindables:new Array()
       };
     }
 
@@ -41,6 +42,9 @@ var fc = (function () {
       return this;
     };
 
+    this.bindable = function () {
+      context.__meta.bindables.push({propertyName:propertyName});
+    };
 
     this.inject = function (what) {
       context.__meta.dependencies.push({propertyName:propertyName, dependencyName:what});
@@ -91,6 +95,15 @@ var fc = (function () {
     if (!bean.__meta) {
       return;
     }
+
+    //Meta name
+
+    do {
+      name = name || Date.now() * Math.random();
+    } while (!name && beans[name]);
+
+    //Inject and Dependencies
+
     for (i in bean.__meta.dependencies) {
       if (!bean.__meta.dependencies.hasOwnProperty(i)) {
         continue;
@@ -98,6 +111,23 @@ var fc = (function () {
       var dep = bean.__meta.dependencies[i];
       bean[dep.propertyName] = beans[dep.dependencyName];
     }
+
+    for (i in bean.__meta.bindables) {
+      if (!bean.__meta.bindables.hasOwnProperty(i)) {
+        continue;
+      }
+      var definition = bean.__meta.bindables[i];
+
+      if(typeof bean[i.propertyName] == 'array') {
+        bean[definition.propertyName] = ko.observableArray(bean[definition.propertyName]);
+      } else {
+        bean[definition.propertyName] = ko.observable(bean[definition.propertyName]);
+      }
+
+    }
+
+    //Post Construct
+
     for (i in bean.__meta.postConstructListeners) {
       if (!bean.__meta.postConstructListeners.hasOwnProperty(i)) {
         continue;
@@ -105,6 +135,10 @@ var fc = (function () {
       var propName = bean.__meta.postConstructListeners[i];
       bean[propName].call(bean);
     }
+    fc.eventer(bean).dispatchEvent({type:'postConstruct', bean:"bean"});
+
+    //Event Handlers
+
     for (var eventName in bean.__meta.eventHandlers) {
       if (!bean.__meta.eventHandlers.hasOwnProperty(eventName)) {
         continue;
@@ -132,6 +166,8 @@ var fc = (function () {
         })(eventDefinition));
       }
     }
+
+    fc.dispatchEvent({type:'tearUp', bean:bean});
   }
 
   fc.beans = function (value) {
@@ -142,6 +178,14 @@ var fc = (function () {
       }
       initBean(beans[i], i);
     }
+  };
+
+  fc.initBean = function (bean) {
+    initBean(bean);
+  };
+
+  fc.beanExists = function (name) {
+    return beans[name] != undefined;
   };
 
   ////////////////////////Listeners
@@ -172,6 +216,53 @@ var fc = (function () {
   fc.on('addedToStage', function (event) {
     initBean(event.target);
   });
+
+  ///////FC . Events
+
+
+  fc.eventer = function (dispatcher) {
+    if (this.constructor != fc.eventer) {
+      return new fc.eventer(dispatcher);
+    }
+
+    function getListeners(eventName) {
+
+      if (dispatcher.__listeners == undefined) {
+        dispatcher.__listeners = new Array();
+      }
+
+      if (dispatcher.__listeners[eventName] == undefined) {
+        dispatcher.__listeners[eventName] = new Array();
+      }
+
+      return dispatcher.__listeners[eventName];
+    }
+
+    this.on = function (eventName, callback) {
+      var listeners = getListeners(eventName);
+      listeners.push(callback);
+    };
+
+    this.dispatchEvent = function (event) {
+      var listeners = getListeners(event.type);
+      for (var i in listeners) {
+        if (!listeners.hasOwnProperty(i)) {
+          continue;
+        }
+        listeners[i](event);
+      }
+      return this;
+    };
+
+    this.removeEventListener = function (eventName, listener) {
+      var listeners = getListeners(eventName);
+      listeners.splice(listeners.indexOf(listener), 1);
+      return this;
+    };
+
+    return this;
+  };
+
 
   return fc;
 })();
