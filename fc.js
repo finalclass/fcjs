@@ -118,7 +118,7 @@ var fc = (function () {
       }
       var definition = bean.__meta.bindables[i];
 
-      if(Object.prototype.toString.call( bean[definition.propertyName] ) === '[object Array]') {
+      if (Object.prototype.toString.call(bean[definition.propertyName]) === '[object Array]') {
         bean[definition.propertyName] = ko.observableArray(bean[definition.propertyName]);
       } else {
         bean[definition.propertyName] = ko.observable(bean[definition.propertyName]);
@@ -171,6 +171,9 @@ var fc = (function () {
   }
 
   fc.beans = function (value) {
+    if(!value) {
+      return beans;
+    }
     beans = value;
     for (var i in beans) {
       if (!beans.hasOwnProperty(i)) {
@@ -178,6 +181,15 @@ var fc = (function () {
       }
       initBean(beans[i], i);
     }
+  };
+
+  var prototypes = new Object();
+
+  fc.prototypes = function (value) {
+    if(!value) {
+      return prototypes;
+    }
+    prototypes = value;
   };
 
   fc.initBean = function (bean) {

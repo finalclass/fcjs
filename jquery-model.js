@@ -1,7 +1,10 @@
 $.fn.model = function () {
   function addViewModel(element) {
+
     var viewModelName = $(element).data('model');
-    var viewModel = new window[viewModelName]();
+    var viewModel = fc.prototypes()[viewModelName] == undefined
+      ? fc.beans()[viewModelName] : new (fc.prototypes()[viewModelName]);
+
     fc.eventer(viewModel).on('postConstruct', function () {
       ko.applyBindings(viewModel, element);
     });

@@ -80,6 +80,9 @@
         fc.beans({
             'TasksModel':new TasksModel()
         });
+        fc.prototypes({
+            'TasksViewModel': TasksViewModel
+        });
         $('[data-model]').model();
     });
 
