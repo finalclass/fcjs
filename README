@@ -20,6 +20,17 @@ Beans can be provided by calling fc.beans(beansList) - where beansList is a key 
 **eventHandler({event: 'EventName', properties: ['property1, 'property2'])**
 Set's the event handler and populates invocation with properties from the event
 
+**bindable()**
+Set's the ko.observable or ko.observableArray or ko.dependendObservable on the variable / array or function
+
+**fc.eventer(object).dispatchEvent(event);**
+Dispatches the event on the object
+
+**fc.eventer(object).on(eventName, listener);**
+Adds listener to object
+
+**fc.eventer(object).removeListener(eventName, listener)**
+Removes listener eventName from the object
 
 @TODO
 Write documentation
