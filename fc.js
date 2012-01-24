@@ -120,6 +120,8 @@ var fc = (function () {
 
       if (Object.prototype.toString.call(bean[definition.propertyName]) === '[object Array]') {
         bean[definition.propertyName] = ko.observableArray(bean[definition.propertyName]);
+      } else if(typeof bean[definition.propertyName] == 'function') {
+        bean[definition.propertyName] = ko.dependentObservable(bean[definition.propertyName]);
       } else {
         bean[definition.propertyName] = ko.observable(bean[definition.propertyName]);
       }

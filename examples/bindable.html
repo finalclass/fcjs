@@ -6,16 +6,42 @@
     <script type="text/javascript" src="../ko.js"></script>
     <script type="text/javascript" src="../fc.js"></script>
     <script type="text/javascript" src="../jquery-model.js"></script>
+
+    <style type="text/css">
+        div {
+            float:left;
+            margin-right: 100px;
+        }
+    </style>
+
 </head>
 <body>
 
 <div data-model="TasksViewModel">
     <ul data-bind="foreach: tasks.data">
-        <li data-bind="text: name "></li>
+        <li>
+            <span data-bind="text: name "></span>
+            <button data-bind="click: remove">x</button>
+        </li>
     </ul>
     <input type="text" data-bind="value: newTaskName" placeholder="Task name"/>
     <button data-bind="click: addTask">Add task</button>
 </div>
+
+
+<table data-model="TasksViewModel" data-bind="foreach: tasks.data" border="1">
+    <tr>
+        <td>
+            <span data-bind="text: name, visible: normalMode"></span>
+            <input type="text" data-bind="visible: editMode, value: name" />
+        </td>
+        <td>
+            <button data-bind="click: remove">x</button>
+            <button data-bind="click: switchMode, visible: editMode">save</button>
+            <button data-bind="click: switchMode, visible: normalMode">edit</button>
+        </td>
+    </tr>
+</table>
 
 <script type="text/javascript">
 
@@ -33,14 +59,38 @@
     TaskEvent.REMOVE = 'task:remove';
     TaskEvent.REMOVED = 'task:removed';
 
+    /**
+     * @class
+     * @param {Object} data
+     */
     var Task = function (data) {
+        var that = this;
         fc(this, 'name').bindable();
         this.name = data.name;
+
+        fc(this, 'editMode').bindable();
+        this.editMode = false;
+
+        fc(this, 'normalMode').bindable();
+        this.normalMode = function() {
+            return !that.editMode();
+        };
+
+        this.remove = function() {
+            fc.dispatchEvent(new TaskEvent(TaskEvent.REMOVE, this.name()));
+        };
+
+        this.switchMode = function() {
+            this.editMode(!this.editMode());
+        };
 
         fc.initBean(this);
         return this;
     };
 
+    /**
+     * @class
+     */
     var TasksModel = function () {
         fc(this, 'data').bindable();
         this.data = [
@@ -48,9 +98,25 @@
             new Task({name:"finish fcjs"})
         ];
 
-        fc(this, 'init').postConstruct();
-        this.init = function () {
+        /**
+         * @param {String} name
+         * @return {Task}
+         */
+        this.findByName = function(name) {
+            var data = this.data();
+            for(var i in data) {
+                if(data[i].name() == name) {
+                    return data[i];
+                }
+            }
+            return null;
+        };
 
+        fc(this, 'removeByName').eventHandler({event: TaskEvent.REMOVE, properties: ['taskName']});
+        this.removeByName = function(name) {
+            var task = this.findByName(name);
+            this.data.remove(task);
+            fc.dispatchEvent(new TaskEvent(TaskEvent.REMOVED, name));
         };
 
         fc(this, 'addTask').eventHandler({event:TaskEvent.ADD, properties:['taskName']});
@@ -60,6 +126,9 @@
         };
     };
 
+    /**
+     * @class
+     */
     var TasksViewModel = function () {
         var that = this;
 
@@ -71,6 +140,7 @@
 
         this.addTask = function () {
             fc.dispatchEvent(new TaskEvent(TaskEvent.ADD, this.newTaskName()));
+            this.newTaskName('');
         };
 
         return this;
